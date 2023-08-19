@@ -27,8 +27,8 @@ set(tmux-mem-cpu-load_VERSION_PATCH 0)
 set(tmux-mem-cpu-load_VERSION
   ${tmux-mem-cpu-load_VERSION_MAJOR}.${tmux-mem-cpu-load_VERSION_MINOR}.${tmux-mem-cpu-load_VERSION_PATCH})
 
-# Check whether we have support for c++11 in compiler and fail if we don't
-set(CMAKE_CXX_STANDARD 11)
+# Check whether we have support for c++20 in compiler and fail if we don't
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # generate header file to handle version
