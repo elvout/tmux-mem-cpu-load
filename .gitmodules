@@ -1,0 +1,3 @@
+[submodule "osx/smctemp"]
+	path = osx/smctemp
+	url = https://github.com/narugit/smctemp.git

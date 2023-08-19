@@ -54,7 +54,7 @@ Installation
 Dependencies
 ------------
 
-This fork only supports Linux.
+This fork only supports Linux and macOS. (macOS only with a recent Intel processor)
 
 In the upstream repository, Linux, Mac OSX, FreeBSD, OpenBSD, and NetBSD are supported.
 
@@ -169,6 +169,7 @@ The full usage::
         Set cpu % display mode. 0: Default max 100%, 1: Max 100% * number of threads.
   -k <value>, --cpu-temp-mode <value>
         Set cpu temperature display mode. 0: Max core temp, 1: Average core temp
+        Ignored on macOS.
   -a <value>, --averages-count <value>
         Set how many load-averages should be drawn. Default: 3
 

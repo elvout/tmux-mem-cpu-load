@@ -21,6 +21,8 @@
 
 #include "cpu.h"
 
+#include "smctemp/smctemp.h"
+
 uint32_t get_cpu_count()
 {
   return sysconf( _SC_NPROCESSORS_ONLN );
@@ -39,7 +41,7 @@ host_cpu_load_info_data_t _get_cpu_percentage()
 
   count = HOST_CPU_LOAD_INFO_COUNT;
   mach_port = mach_host_self();
-  error = host_statistics(mach_port, HOST_CPU_LOAD_INFO, 
+  error = host_statistics(mach_port, HOST_CPU_LOAD_INFO,
       ( host_info_t )&r_load, &count );
 
   if ( error != KERN_SUCCESS )
@@ -73,8 +75,25 @@ float cpu_percentage( unsigned int cpu_usage_delay )
   unsigned long long diff_nice = next_nice - current_nice;
   unsigned long long diff_idle = next_idle - current_idle;
 
-  return static_cast<float>( diff_user + diff_system + diff_nice ) / 
-    static_cast<float>( diff_user + diff_system + diff_nice + diff_idle ) * 
+  return static_cast<float>( diff_user + diff_system + diff_nice ) /
+    static_cast<float>( diff_user + diff_system + diff_nice + diff_idle ) *
     100.0;
 }
 
+// TODO: ignoring CPU_TEMP_MODE for now
+float cpu_temp_c(CPU_TEMP_MODE mode) {
+  static smctemp::SmcAccessor smc_accessor;
+
+#if defined(ARCH_TYPE_X86_64)
+  // https://logi.wiki/index.php/SMC_Sensor_Codes
+  // TCXC = CPU PECI
+  // Apparently SMC codes change between Mac models :(
+  // This worked on a MacBookPro15,2 with an i5-8279U
+  return static_cast<float>(smc_accessor.ReadValue("TCXC"));
+#elif defined(ARCH_TYPE_ARM64)
+  // TODO: I do not have an ARM mac to test on
+  return -273.15f;
+#else
+  return -273.15f;
+#endif
+}
