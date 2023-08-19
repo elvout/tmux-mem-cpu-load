@@ -113,6 +113,43 @@ std::string cpu_string( CPU_MODE cpu_mode, unsigned int cpu_usage_delay, unsigne
   return oss.str();
 }
 
+std::string cpu_temp_string(CPU_TEMP_MODE cpu_temp_mode, bool use_colors = false,
+bool use_powerline_left = false, bool use_powerline_right = false) {
+  std::ostringstream oss;
+  oss.precision(0);
+  oss.setf(std::ios::fixed | std::ios::right);
+
+  const float temp_c = cpu_temp_c(cpu_temp_mode);
+
+  // steal colors from cpu%
+  unsigned int percent = static_cast<unsigned int>(temp_c);
+  percent = std::max(0u, percent);
+  percent = std::min(100u, percent);
+  if (use_colors) {
+    if (use_powerline_right) {
+      powerline(oss, cpu_percentage_lut[percent], POWERLINE_RIGHT);
+    } else if (use_powerline_left) {
+      powerline(oss, cpu_percentage_lut[percent], POWERLINE_LEFT);
+    } else {
+      powerline(oss, cpu_percentage_lut[percent], NONE);
+    }
+  }
+
+  oss.width(3);
+  oss.fill(' ');
+  oss << std::right << temp_c;
+  oss << "°C";
+  if (use_colors) {
+    if (use_powerline_left) {
+      powerline(oss, cpu_percentage_lut[percent], POWERLINE_LEFT, true);
+    } else if (!use_powerline_right) {
+      oss << "#[fg=default,bg=default]";
+    }
+  }
+
+  return oss.str();
+}
+
 void print_help()
 {
   using std::cout;
@@ -167,6 +204,7 @@ int main( int argc, char** argv )
   bool segments_to_right= false;
   MEMORY_MODE mem_mode = MEMORY_MODE_DEFAULT;
   CPU_MODE cpu_mode = CPU_MODE_DEFAULT;
+  CPU_TEMP_MODE cpu_temp_mode = CPU_TEMP_MODE_MAX;
 
   static struct option long_options[] =
   {
@@ -183,6 +221,7 @@ int main( int argc, char** argv )
     { "graph-lines", required_argument, NULL, 'g' },
     { "mem-mode", required_argument, NULL, 'm' },
     { "cpu-mode", required_argument, NULL, 't' },
+    { "cpu-temp-mode", required_argument, NULL, 'k' },
     { "averages-count", required_argument, NULL, 'a' },
     { "segments-left", required_argument, NULL, 'l' },
     { "segments-right", required_argument, NULL, 'r' },
@@ -191,7 +230,7 @@ int main( int argc, char** argv )
 
   int c;
   // while c != -1
-  while( (c = getopt_long( argc, argv, "hi:cpqvl:r:g:m:a:t:", long_options, NULL) ) != -1 )
+  while( (c = getopt_long( argc, argv, "hi:cpqvl:r:g:m:a:t:k:", long_options, NULL) ) != -1 )
   {
     switch( c )
     {
@@ -263,6 +302,14 @@ int main( int argc, char** argv )
           }
         cpu_mode = static_cast< CPU_MODE >( atoi( optarg ) );
         break;
+      case 'k': // --cpu-temp-mode, -k
+        if ( atoi(optarg) < 0 )
+          {
+            std::cerr << "CPU temp mode argument must be zero or greater.\n";
+            return EXIT_FAILURE;
+          }
+        cpu_temp_mode = static_cast< CPU_TEMP_MODE > ( atoi(optarg) );
+        break;
       case 'a': // --averages-count, -a
         if( atoi( optarg ) < 0 || atoi( optarg ) > 3 )
           {
@@ -293,10 +340,10 @@ int main( int argc, char** argv )
   mem_status( memory_status );
   std::cout << mem_string( memory_status, mem_mode, use_colors, use_powerline_left, use_powerline_right, segments_to_left, left_color )
     << cpu_string( cpu_mode, cpu_usage_delay, graph_lines, use_colors, use_powerline_left, use_powerline_right, use_vert_graph )
+    << cpu_temp_string(cpu_temp_mode, use_colors, use_powerline_left, use_powerline_right)
     << load_string( use_colors, use_powerline_left, use_powerline_right, averages_count, segments_to_right, right_color );
 
   std::cout << std::endl;
 
   return EXIT_SUCCESS;
 }
-

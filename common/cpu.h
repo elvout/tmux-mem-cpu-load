@@ -64,4 +64,11 @@ enum CPU_MODE
   CPU_MODE_THREADS
 };
 
+enum CPU_TEMP_MODE {
+  CPU_TEMP_MODE_MAX = 0,
+  CPU_TEMP_MODE_AVERAGE = 1,
+};
+
+float cpu_temp_c(CPU_TEMP_MODE);
+
 #endif

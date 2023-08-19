@@ -10,7 +10,7 @@ CPU, RAM, and load monitor for use with tmux_
 
 .. image:: https://circleci.com/gh/thewtex/tmux-mem-cpu-load.svg?style=svg
   :target: https://circleci.com/gh/thewtex/tmux-mem-cpu-load
-  
+
 .. image:: https://github.com/thewtex/tmux-mem-cpu-load/actions/workflows/main.yml/badge.svg
    :target: https://github.com/thewtex/tmux-mem-cpu-load/actions/workflows/main.yml
 
@@ -29,19 +29,20 @@ The system load average is also displayed.
 
 Example output::
 
-  2885/7987MB [|||||     ]  51.2% 2.11 2.35 2.44
+  2885/7987MB [|||||     ]  51.2% 40°C 2.11 2.35 2.44
 
-   ^    ^          ^         ^     ^    ^    ^
-   |    |          |         |     |    |    |
-   1    2          3         4     5    6    7
+   ^    ^          ^         ^     ^    ^    ^    ^
+   |    |          |         |     |    |    |    |
+   1    2          3         4     5    6    7    8
 
 1. Currently used memory.
 2. Available memory.
 3. CPU usage bar graph.
 4. CPU usage percentage.
-5. Load average for the past minute.
-6. Load average for the past 5 minutes.
-7. Load average for the past 15 minutes.
+5. CPU temperature in Celsius.
+6. Load average for the past minute.
+7. Load average for the past 5 minutes.
+8. Load average for the past 15 minutes.
 
 For `terminals with 256 color support`_, graded colors can be displayed by
 passing the **--colors** flag.
@@ -53,7 +54,9 @@ Installation
 Dependencies
 ------------
 
-Currently, Linux, Mac OSX, FreeBSD, OpenBSD, and NetBSD are supported.
+This fork only supports Linux.
+
+In the upstream repository, Linux, Mac OSX, FreeBSD, OpenBSD, and NetBSD are supported.
 
 Building
 ~~~~~~~~
@@ -164,6 +167,8 @@ The full usage::
         Set memory display mode. 0: Default, 1: Free memory, 2: Usage percent.
   -t <value>, --cpu-mode <value>
         Set cpu % display mode. 0: Default max 100%, 1: Max 100% * number of threads.
+  -k <value>, --cpu-temp-mode <value>
+        Set cpu temperature display mode. 0: Max core temp, 1: Average core temp
   -a <value>, --averages-count <value>
         Set how many load-averages should be drawn. Default: 3
 
@@ -197,7 +202,7 @@ This combines with theme options available to tmux-powerline, such as the follow
 
   "disk_usage_cust 52 123 ${TMUX_POWERLINE_SEPARATOR_LEFT_BOLD} 52 123 right_disable" \
   "tmux_mem_cpu_load_cust 52 234 ${TMUX_POWERLINE_SEPARATOR_LEFT_BOLD} 52 234 both_disable separator_disable" \
-  "batt_cust 33 154 ${TMUX_POWERLINE_SEPARATOR_LEFT_BOLD} 16 33 N separator_disable" \  
+  "batt_cust 33 154 ${TMUX_POWERLINE_SEPARATOR_LEFT_BOLD} 16 33 N separator_disable" \
 
 Authors
 =======

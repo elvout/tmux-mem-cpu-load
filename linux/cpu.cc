@@ -17,7 +17,9 @@
  */
 
 #include <string>
+#include <filesystem>
 #include <fstream>
+#include <optional>
 #include <unistd.h> // usleep
 
 #include "cpu.h"
@@ -69,10 +71,69 @@ float cpu_percentage( unsigned cpu_usage_delay )
     stats[i] = std::stoll( line.substr( substr_start, substr_len ) ) - stats[i];
   }
 
-  return static_cast<float>( 
+  return static_cast<float>(
     stats[CP_USER] + stats[CP_NICE] + stats[CP_SYS]
-    ) / static_cast<float>( 
-        stats[CP_USER] + stats[CP_NICE] + stats[CP_SYS] + stats[CP_IDLE] 
+    ) / static_cast<float>(
+        stats[CP_USER] + stats[CP_NICE] + stats[CP_SYS] + stats[CP_IDLE]
     ) * 100.0;
 }
 
+// Obtain cpu core temperatures from sysfs.
+// TODO: only tested with a single-socket Intel chip, Kernel 6.2
+float cpu_temp_c(CPU_TEMP_MODE mode) {
+  static constexpr float MIN_TEMP = -273.15f;
+  static const std::filesystem::path hwmon_base_dir("/sys/devices/platform/coretemp.0/hwmon");
+
+  if (!std::filesystem::exists(hwmon_base_dir)) {
+    return MIN_TEMP;
+  }
+
+  std::optional<std::filesystem::path> hwmonX_dir;
+  for (const auto& dir_entry : std::filesystem::directory_iterator(hwmon_base_dir)) {
+    if (dir_entry.is_directory() && dir_entry.path().filename().string().starts_with("hwmon")) {
+      hwmonX_dir = dir_entry.path();
+      break;
+    }
+  }
+
+  if (!hwmonX_dir.has_value()) {
+    return MIN_TEMP;
+  }
+
+  float max_temp = MIN_TEMP;
+  float sum_temp = 0;
+  int zone_count = 0;
+
+  std::string label;
+  unsigned milli_c;
+  // easy, but perhaps not the best way to do this
+  for (unsigned i = 1; i < 9999; ++i) {
+    const std::filesystem::path label_path =
+        hwmonX_dir.value() / ("temp" + std::to_string(i) + "_label");
+    const std::filesystem::path input_path =
+        hwmonX_dir.value() / ("temp" + std::to_string(i) + "_input");
+
+    if (!std::filesystem::exists(label_path)) {
+      break;
+    }
+
+    std::ifstream label_file(label_path);
+    label_file >> label;
+
+    std::ifstream input_file(input_path);
+    input_file >> milli_c;
+
+    if (label.starts_with("Package")) {
+      max_temp = static_cast<float>(milli_c);
+    } else {
+      sum_temp += static_cast<float>(milli_c);
+      ++zone_count;
+    }
+  }
+
+  if (mode == CPU_TEMP_MODE_MAX) {
+    return max_temp * 0.001f;
+  } else {
+    return sum_temp / static_cast<float>(zone_count) * 0.001f;
+  }
+}
