@@ -33,25 +33,10 @@ void mem_status( MemoryStatus & status )
   unsigned int total_mem;
   unsigned int used_mem;
 
-  /* Since linux uses some RAM for disk caching, the actuall used ram is lower
-   * than what sysinfo(), top or free reports. htop reports the usage in a
-   * correct way. The memory used for caching doesn't count as used, since it
-   * can be freed in any moment. Usually it hapens automatically, when an
-   * application requests memory.
-   * In order to calculate the ram that's actually used we need to use the
-   * following formula:
-   *    total_ram + shmem - free_ram - buffered_ram - cached_ram - srclaimable
+  /* Read /proc/meminfo to find the amount of total and used RAM, assuming a
+   * recent kernel (3.14+) that calculates the amount of available RAM for us.
    *
-   * example data, junk removed, with comments added:
-   *
-   * MemTotal:        61768 kB    old
-   * MemFree:          1436 kB    old
-   * MemAvailable     ????? kB    ??
-   * MemShared:           0 kB    old (now always zero; not calculated)
-   * Buffers:          1312 kB    old
-   * Cached:          20932 kB    old
-   * SwapTotal:      122580 kB    old
-   * SwapFree:        60352 kB    old
+   * https://github.com/torvalds/linux/commit/34e431b0a
    */
 
   std::ifstream memory_info("/proc/meminfo");
@@ -68,19 +53,8 @@ void mem_status( MemoryStatus & status )
       // get total memory
       total_mem = stoi( line.substr( substr_start, substr_len ) );
     }
-    else if( substr.compare( "MemFree" ) == 0 )
-    {
+    else if( substr.compare( "MemAvailable" ) == 0 ) {
       used_mem = total_mem - stoi( line.substr( substr_start, substr_len ) );
-    }
-    else if( substr.compare( "Shmem" ) == 0 )
-    {
-      used_mem += stoi( line.substr( substr_start, substr_len ) );
-    }
-    else if( substr.compare( "Buffers" ) == 0 ||
-             substr.compare( "Cached" ) == 0  ||
-             substr.compare( "SReclaimable" ) == 0 )
-    {
-      used_mem -= stoi( line.substr( substr_start, substr_len ) );
     }
   }
 
@@ -90,4 +64,3 @@ void mem_status( MemoryStatus & status )
   status.used_mem = convert_unit(static_cast< float >( used_mem ), MEGABYTES, KILOBYTES);
   status.total_mem = convert_unit(static_cast< float >( total_mem ), MEGABYTES, KILOBYTES);
 }
-
