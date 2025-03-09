@@ -91,8 +91,10 @@ float cpu_temp_c(CPU_TEMP_MODE mode) {
   // This worked on a MacBookPro15,2 with an i5-8279U
   return static_cast<float>(smc_accessor.ReadValue("TCXC"));
 #elif defined(ARCH_TYPE_ARM64)
-  // TODO: I do not have an ARM mac to test on
-  return -273.15f;
+  // https://github.com/exelban/stats/blob/5a7e4b7e5576/Modules/Sensors/values.swift
+  // This uses the first P-core as a proxy for the entire CPU package.
+  // Works on a MW2W3LL/A; A3112; Mac16,1; 14-inch MacBook Pro, M4 (10c, 4p6e), Nov 2024.
+  return static_cast<float>(smc_accessor.ReadValue("Tp01"));
 #else
   return -273.15f;
 #endif
